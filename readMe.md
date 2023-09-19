@@ -6,10 +6,10 @@ For this tutoriel we need some knowledges:
 
 - [nodejs](https://nodejs.org/en) to run server
 
-- [microsoft account](https://account.microsoft.com/account) to create app register from [azure portail](https://portal.azure.com/)
+- [microsoft account](https://account.microsoft.com/account) to create app register from [azure portal](https://portal.azure.com/)
 - `express` library : to listen incoming request to server.
 
-- `@azure/msal-node` library : to connect express server to azure portail and acquire idToken from user
+- `@azure/msal-node` library : to connect express server to azure portal  and acquire idToken from user
 - `dotenv` library: to set environment variables that will be use inside of application
 
 - `nodemon` library : to restart application automatically when javascript files changes
@@ -38,7 +38,7 @@ npm i nodemon -D
 
 All commands above must be run step by step to install each dependance.
 
-in the next section we will create and setup an application in azure portail with azure active directory.<br><br>
+in the next section we will create and setup an application in azure portal  with azure active directory.<br><br>
 
 # Usage
 
