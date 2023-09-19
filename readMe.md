@@ -9,7 +9,7 @@ For this tutoriel we need some knowledges:
 - [microsoft account](https://account.microsoft.com/account) to create app register from [azure portal](https://portal.azure.com/)
 - `express` library : to listen incoming request to server.
 
-- `@azure/msal-node` library : to connect express server to azure portal  and acquire idToken from user
+- `@azure/msal-node` library : to connect express server to azure portal and acquire idToken from user
 - `dotenv` library: to set environment variables that will be use inside of application
 
 - `nodemon` library : to restart application automatically when javascript files changes
@@ -38,7 +38,7 @@ npm i nodemon -D
 
 All commands above must be run step by step to install each dependance.
 
-in the next section we will create and setup an application in azure portal  with azure active directory.<br><br>
+in the next section we will create and setup an application in azure portal with azure active directory.<br><br>
 
 # Usage
 
@@ -196,4 +196,99 @@ app.get("/redirect", async (req, res) => {
 app.listen(PORT, () => console.log(`Server running on port: ${PORT}`))
 ```
 
-Thank you for you attention,cordialy.
+<br><br>
+
+# Creating the email client with authentication
+
+In this section we will see how can i send email to user using `@azure/communication`.<br/>
+To do that we need to install two required libraries:
+
+```cmd
+  # to authenticate user
+
+  npm install @azure/identity
+
+  # to send email
+
+  npm install @azure/communication-email --save
+```
+
+After the installation,we need to create new client email:<br/><br/>
+
+## Create new client email
+
+```javascript
+import { DefaultAzureCredential } from "@azure/identity";
+
+import { EmailClient } from "@azure/communication-email";
+
+const endpoint = "https://<resource-name>.communication.azure.com";
+
+let credential = new DefaultAzureCredential();
+
+const emailClient = new EmailClient(endpoint, credential);
+```
+
+After created client we can send email to target user. we can do like this:
+
+```javascript
+async function main() {
+  const POLLER_WAIT_TIME = 10;
+  try {
+    const message = {
+      senderAddress:
+        "<donotreply@xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx.azurecomm.net>",
+      content: {
+        subject: "Welcome to Azure Communication Services Email",
+        plainText:
+          "This email message is sent from Azure Communication Services Email using the JavaScript SDK.",
+      },
+      recipients: {
+        to: [
+          {
+            address: "<emailalias@emaildomain.com>",
+            displayName: "Customer Name",
+          },
+        ],
+      },
+    };
+
+    const poller = await emailClient.beginSend(message);
+
+    if (!poller.getOperationState().isStarted) {
+      throw "Poller was not started.";
+    }
+
+    let timeElapsed = 0;
+    while (!poller.isDone()) {
+      poller.poll();
+      console.log("Email send polling in progress");
+
+      await new Promise((resolve) =>
+        setTimeout(resolve, POLLER_WAIT_TIME * 1000)
+      );
+      timeElapsed += 10;
+
+      if (timeElapsed > 18 * POLLER_WAIT_TIME) {
+        throw "Polling timed out.";
+      }
+    }
+
+    if (poller.getResult().status === KnownEmailSendStatus.Succeeded) {
+      console.log(
+        `Successfully sent the email (operation id: ${poller.getResult().id})`
+      );
+    } else {
+      throw poller.getResult().error;
+    }
+  } catch (e) {
+    console.log(e);
+  }
+}
+
+main();
+```
+
+then when main function is calling user wil be receive an email address.
+
+thank you for your time to read this tutoriel.
