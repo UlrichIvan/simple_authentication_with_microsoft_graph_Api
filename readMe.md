@@ -1,39 +1,42 @@
 # Authentification with microsoft graph API and nodejs
 
-In this tutoriel we want to learn we can get idtoken from user using Asure Active Directoty.
+In this tutoriel we want to learn how can i get idtoken from user using Asure Active Directoty.
 
 For this tutoriel we need some knowledges:
 
 - [nodejs](https://nodejs.org/en) to run server
 
 - [microsoft account](https://account.microsoft.com/account) to create app register from [azure portail](https://portal.azure.com/)
-- express library : to listing incoming request from server.
+- `express` library : to listen incoming request to server.
 
-- @azure/msal-node library : to connect express server to azure portail and acquire idToken from user
-- dotenv library: to set environment variables that will be use inside of application
+- `@azure/msal-node` library : to connect express server to azure portail and acquire idToken from user
+- `dotenv` library: to set environment variables that will be use inside of application
 
-- nodemon library : to restart application automatically when javascript files changes
+- `nodemon` library : to restart application automatically when javascript files changes
 
-In the next line let's init node application and install require libraries.
+In the section let's init node application and install require libraries.
 <br/>
 <br/>
 
-# Init node application
+# Init node application(standalone,optional)
 
-To init node application we need to use some command from npm(it is the tool to manage library from nodejs).
+To init node application we need to use some commands from npm(it's the package manager for nodejs).
 
 ```cmd
 # to init application
+
 npm init --yes
 
-# installl all libraries dependance
+# install all libraries dependance
+
 npm i express @azure/msal-node dotenv --save
 
 # install nodemon in development mode
+
 npm i nodemon -D
 ```
 
-All command above must be run step by step to install each dependance.
+All commands above must be run step by step to install each dependance.
 
 in the next section we will create and setup an application in azure portail with azure active directory.<br><br>
 
@@ -41,21 +44,23 @@ in the next section we will create and setup an application in azure portail wit
 
 ```cmd
 # install dependances
+
 npm i or npm install
 
 # run app
+
 npm run start
 ```
 
 # Create application in azure active directory
 
-This is the step to create application in azure active directory
+This is the step to create application in azure active directory :
 
 - Authentication into azure portal with microsoft account
 
 - In front of you click on icon `Azure active directory`
 
-- In the left side bar choose the `app registration`
+- In the left sidebar choose the `app registration`
 
 - In front of you click on `new registration`
 
@@ -63,10 +68,11 @@ This is the step to create application in azure active directory
 
   - the application name,in our case you will call him `web_app`
 
-  - select the support account types : for this tutoriel we will take `Accounts in any organizational directory (Any Microsoft Entra ID tenant - Multitenant) and personal Microsoft accounts (e.g. Skype, Xbox` to provide large possiblity from use to signin into your application
-  - Redirect URI (optional) : enter the url redirection to receive `idToken` after signin of users. in our case we will enter : `http://localhost:3000/redirect`.
+  - select the support account types : for this tutoriel we will take `Accounts in any organizational directory (Any Microsoft Entra ID tenant - Multitenant) and personal Microsoft accounts (e.g. Skype, Xbox` to provide large possiblity from users to signin into your application
 
-  - press register button to save all informations enter and selected
+  - Redirect URI (optional) : enter the url redirection to receive `idToken` after signin of users. in our case we will enter : `http://localhost:3000/redirect/`.
+
+  - press register button to save all informations entered and selected.
 
 After the validation you will see the information of your account,then you will save two informations:
 
@@ -74,11 +80,11 @@ After the validation you will see the information of your account,then you will 
 
 - tenantId : the ID from owner of account
 
-In next the step we will create a clientSecret which is the secret key from user to authentication. <br/><br/>
+In the next section we will create a `clientSecret` which is the secret key from user to authentication. <br/><br/>
 
-# setup application created
+# Setup application created
 
-for do that we must;
+For do that we must;
 
 - Click on `certificates & secret`
 
@@ -91,7 +97,7 @@ In the next section you will set the permissions to access to data of user, let'
 
 - First you need to click on `app registers` in the left sidebar.
 
-- After it select the application that we want to set permissions, in our case it is `web_app`.
+- After, select the application that we want to set permissions, in our case it is `web_app`.
 
 - In front of you,click on `Add permision`
 
@@ -103,7 +109,7 @@ In the next section you will set the permissions to access to data of user, let'
 
   - `Application permission ` : use to other application,generaly for application who run on the background or daemon without signed-in user. it is not our choice
 
-- there,click `delegated permission` and you will see a list of choice,select the permission that you want, in our case we will select `Mail.read` because we want to access on email of user. the default value is `User.red`,if not exists add it. After click on `Add permissions` to save permissions.
+- then, click `delegated permission` and you will see a list of choices,select the permission that you want, in our case we will select `Mail.read` because we want to access on email of user. the default value is `User.read`,if not exists add it. After click on `Add permissions` to save permissions.
 
 In the next session we will implement code. we will have 3 steps above :
 
@@ -113,7 +119,7 @@ In the next session we will implement code. we will have 3 steps above :
 
 - Transition : during authentication of user, we have to issues:
 
-  - success: in this case API will be redirect user from the initial page when authentication had been began first, in our case we will take `http://localhost:3000`.
+  - success: in this case API will be redirect user from the initial page when authentication had began first, in our case we will take `http://localhost:3000`.
 
   - failed: in this case API will be redirect user from the initial page when authentication had been began first, in our case we will take `http://localhost:3000/redirect/`.
 
@@ -123,56 +129,49 @@ Like describe above we will see each step with code to perform all informations 
 
 let's begin:<br/><br/>
 
-# Explaim all code step by step
+# Explain all code step by step
 
 ```javascript
 #app.js
 
-// load dotenv lybrary to access on environment varibles
-
 require("dotenv").config();
 
-// require all necessary labrary
-
 const express = require("express");
-const app = express();
-const url = require("url");
-const { ConfidentialClientApplication } = require("@azure/msal-node");
-const PORT = process.env.PORT || 3000;
 
-// auth configuration to get urlRedirect from API
+const app = express();
+
+const url = require("url");
+
+const { ConfidentialClientApplication } = require("@azure/msal-node");
+
+const PORT = process.env.PORT || 3000;
 
 const authConfig = {
   auth: {
-    clientId: process.env.CLIENT_ID,// clientID keep from azure cloud
-    authority: process.env.AUTHORITY,// url to authorization of user authenticated
-    clientSecret: process.env.CLIENT_SECRET, // clientSecret keep from azure cloud
+    clientId: process.env.CLIENT_ID,
+    authority: process.env.AUTHORITY,
+    clientSecret: process.env.CLIENT_SECRET,
   },
 };
 
-// request seeting to get idToken
 
 const request = {
-  scopes: ["User.read"],// permissions add in application since azure microsolft
-  redirectUri: process.env.REDIRECT_URI, // redirect uri set on azure cloud for app,it must be the same like redirect uri from azure cloud,otherwise authentification will be failed
+  scopes: ["User.read","Mail.read"],
+  redirectUri: process.env.REDIRECT_URI,
 };
 
-// create a client to contact remote ÂPI
 
 const client = new ConfidentialClientApplication(authConfig);
 
-// route to init authentication of user
 
 app.get("/", async (req, res) => {
   try {
-    // if authentication is successfully like see below API will be redirect to init pasge in these case,we will redirect user to redirect url to manage request
-
     if (req.query.code) {
       return res.redirect(
         url.format({ pathname: "/redirect", query: req.query })
       );
     }
-    // if user is not authenticate,then get url and redirect him to redirect page to manage his data
+
     let authUrl = await client.getAuthCodeUrl(request);
     res.redirect(authUrl);
   } catch (error) {
@@ -180,26 +179,19 @@ app.get("/", async (req, res) => {
   }
 });
 
-// redirect url to manage user request
 
 app.get("/redirect", async (req, res) => {
     try {
-        // when user is login from API, he is redirect here and we get his token
 
         let { account } = await client.acquireTokenByCode({ ...request, code: req.query.code }, { code: req.query.code })
         let { username } = account
 
-        //successfully authentication
-
         res.status(200).send({ message: "token has been acquired successfully", username })
     } catch (error) {
 
-        // post error when error occured during authentication
         res.status(500).send(error)
     }
 })
-
-// listen server runing
 
 app.listen(PORT, () => console.log(`Server running on port: ${PORT}`))
 ```
