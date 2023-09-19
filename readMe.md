@@ -129,7 +129,7 @@ Like describe above we will see each step with code to perform all informations 
 
 let's begin:<br/><br/>
 
-# Explain all code step by step
+# All code step by step
 
 ```javascript
 #app.js
