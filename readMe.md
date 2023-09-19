@@ -196,4 +196,4 @@ app.get("/redirect", async (req, res) => {
 app.listen(PORT, () => console.log(`Server running on port: ${PORT}`))
 ```
 
-Thank you for you attention,have a best day cordialy.
+Thank you for you attention,cordialy.
