@@ -4,23 +4,21 @@ const express = require("express")
 const app = express()
 const url = require("url")
 const { ConfidentialClientApplication } = require("@azure/msal-node")
-const fetchEmail = require('./middlewares/fetchEmail')
-const { fetchMessges } = require('./services/api')
 const session = require('express-session')
 const { default: axios } = require('axios')
+const { CLIENT_ID, CLIENT_SECRET, AUTHORITY, REDIRECT_URI, PORT, MESSAGES } = require('./config')
 const Filestore = require("session-file-store")(session)
-const PORT = process.env.PORT || 3000
 
 const authConfig = {
     auth: {
-        clientId: process.env.CLIENT_ID,
-        authority: process.env.AUTHORITY,
-        clientSecret: process.env.CLIENT_SECRET
+        clientId: CLIENT_ID,
+        authority: AUTHORITY,
+        clientSecret: CLIENT_SECRET
     }
 }
 const request = {
-    scopes: ["User.Read"],
-    redirectUri: process.env.REDIRECT_URI,
+    scopes: ["User.Read", "profile"],
+    redirectUri: REDIRECT_URI,
 }
 
 const client = new ConfidentialClientApplication(authConfig)
@@ -54,24 +52,27 @@ app.get('/', async (req, res) => {
 app.get("/redirect", async (req, res) => {
     try {
 
-        let { accessToken } = await client.acquireTokenByCode({ ...request, code: req.query.code }, { code: req.query.code })
+        // let { accessToken } = await client.acquireTokenByCode({ ...request, code: req.query.code }, { code: req.query.code })
+
+        let data = await client.acquireTokenByCode({ ...request, code: req.query.code }, { code: req.query.code })
+
 
         // const user = {
         //     username: data.account.username,
         //     idToken: data.idToken,
         //     accessToken: data.accessToken
         // }
-        const url = `https://graph.microsoft.com/v1.0/me/messages/`
+        // const url = `https://graph.microsoft.com/v1.0/me`
 
         const headers = {
             Authorization: `Bearer ${accessToken}`
         }
 
-        let messages = await axios.get(url, {
+        let messages = await axios.get(MESSAGES, {
             headers
         })
 
-        return res.status(200).send(messages)
+        return res.status(200).send(data,messages)
 
     } catch (error) {
         res.status(500).send(error)
